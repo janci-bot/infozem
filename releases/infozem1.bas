@@ -1,0 +1,201 @@
+' ==================================
+' INFOZEM – databaza lokalit (POI)
+' Version: 0.1
+' Platform: PicoCalc / MMBasic
+' Workflow: VSCode → GitHub → iPad → SD
+' ==================================
+
+' --------- KONFIGURACIA ---------
+CONST MAX_LOC = 50
+CONST MAX_TYPES = 6
+
+' --------- TYPY LOKALIT ---------
+DIM type_name$(MAX_TYPES)
+type_name$(1) = "Mesto"
+type_name$(2) = "Pamiatka"
+type_name$(3) = "Vyhlad"
+type_name$(4) = "Cerpacia stanica"
+type_name$(5) = "Priechod"
+type_name$(6) = "Ine"
+
+' --------- DATA LOKALIT ---------
+DIM loc_type(MAX_LOC)
+DIM loc_name$(MAX_LOC)
+DIM loc_desc$(MAX_LOC)
+DIM loc_country$(MAX_LOC)
+DIM loc_city$(MAX_LOC)
+DIM loc_alt(MAX_LOC)
+DIM loc_lat(MAX_LOC)
+DIM loc_lon(MAX_LOC)
+
+loc_count = 0
+selected_type = 0
+
+' ==============================
+' HLAVNY PROGRAM
+' ==============================
+
+DO
+  CLS
+  PRINT "========================"
+  PRINT "  DATABAZA LOKALIT (POI)"
+  PRINT "========================"
+  PRINT
+  PRINT "1 - Pridat lokalitu"
+  PRINT "2 - Zoznam lokalit"
+  PRINT "3 - Ulozit na SD"
+  PRINT "4 - Nacitat zo SD"
+  PRINT "0 - Koniec"
+  PRINT
+  INPUT "Volba: ", choice
+
+  SELECT CASE choice
+    CASE 1
+      GOSUB AddLocation
+    CASE 2
+      GOSUB ListLocations
+    CASE 3
+      GOSUB SaveToSD
+    CASE 4
+      GOSUB LoadFromSD
+  END SELECT
+
+LOOP UNTIL choice = 0
+
+CLS
+PRINT "Koniec programu."
+END
+
+' ==============================
+' PRIDANIE LOKALITY
+' ==============================
+
+AddLocation:
+  IF loc_count >= MAX_LOC THEN
+    PRINT "Pamat je plna!"
+    PAUSE 1500
+    RETURN
+  ENDIF
+
+  loc_count = loc_count + 1
+
+  GOSUB SelectType
+  loc_type(loc_count) = selected_type
+
+  INPUT "Nazov: ", loc_name$(loc_count)
+  INPUT "Popis: ", loc_desc$(loc_count)
+  INPUT "Stat: ", loc_country$(loc_count)
+  INPUT "Mesto: ", loc_city$(loc_count)
+  INPUT "Nadmorska vyska (m): ", loc_alt(loc_count)
+  INPUT "Latitude: ", loc_lat(loc_count)
+  INPUT "Longitude: ", loc_lon(loc_count)
+
+  PRINT
+  PRINT "Lokalita ulozena."
+  PAUSE 1500
+RETURN
+
+' ==============================
+' VYBER TYPU LOKALITY
+' ==============================
+
+SelectType:
+  CLS
+  PRINT "Vyber typ lokality:"
+  PRINT "-------------------"
+  FOR i = 1 TO MAX_TYPES
+    PRINT i; " - "; type_name$(i)
+  NEXT i
+  PRINT
+
+  INPUT "Typ (1-" + STR$(MAX_TYPES) + "): ", selected_type
+
+  IF selected_type < 1 OR selected_type > MAX_TYPES THEN
+    PRINT "Neplatna volba!"
+    PAUSE 1500
+    GOTO SelectType
+  ENDIF
+RETURN
+
+' ==============================
+' ZOZNAM LOKALIT
+' ==============================
+
+ListLocations:
+  CLS
+  IF loc_count = 0 THEN
+    PRINT "Ziadne lokality."
+  ELSE
+    PRINT "Zoznam lokalit:"
+    PRINT "----------------"
+    FOR i = 1 TO loc_count
+      PRINT i; ". ";
+      PRINT loc_name$(i); " ("; type_name$(loc_type(i)); ")"
+    NEXT i
+  ENDIF
+
+  PRINT
+  PRINT "Stlac ENTER..."
+  DO
+    k$ = INKEY$
+  LOOP UNTIL k$ = CHR$(13)
+RETURN
+
+' ==============================
+' ULOZENIE NA SD KARTU
+' ==============================
+
+SaveToSD:
+  CHDIR "B:"
+  OPEN "lokality.txt" FOR OUTPUT AS #1
+  PRINT #1, loc_count
+
+  FOR i = 1 TO loc_count
+    PRINT #1, loc_type(i)
+    PRINT #1, loc_name$(i)
+    PRINT #1, loc_desc$(i)
+    PRINT #1, loc_country$(i)
+    PRINT #1, loc_city$(i)
+    PRINT #1, loc_alt(i)
+    PRINT #1, loc_lat(i)
+    PRINT #1, loc_lon(i)
+  NEXT i
+
+  CLOSE #1
+  PRINT "Data ulozene na SD."
+  PAUSE 1500
+RETURN
+
+' ==============================
+' NACITANIE Z SD KARTY
+' ==============================
+
+LoadFromSD:
+  ON ERROR SKIP 1
+  CHDIR "B:"
+  OPEN "lokality.txt" FOR INPUT AS #1
+  IF MM.ERRNO <> 0 THEN
+    PRINT "Subor neexistuje!"
+    PAUSE 1500
+    ON ERROR ABORT
+    RETURN
+  ENDIF
+  ON ERROR ABORT
+
+  INPUT #1, loc_count
+
+  FOR i = 1 TO loc_count
+    INPUT #1, loc_type(i)
+    LINE INPUT #1, loc_name$(i)
+    LINE INPUT #1, loc_desc$(i)
+    LINE INPUT #1, loc_country$(i)
+    LINE INPUT #1, loc_city$(i)
+    INPUT #1, loc_alt(i)
+    INPUT #1, loc_lat(i)
+    INPUT #1, loc_lon(i)
+  NEXT i
+
+  CLOSE #1
+  PRINT "Data nacitane."
+  PAUSE 1500
+RETURN
