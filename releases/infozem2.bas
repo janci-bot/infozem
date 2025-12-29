@@ -145,8 +145,10 @@ SelectType:
     PRINT i; " - "; type_name$(i)
   NEXT i
   PRINT
+  
+  PRINT "Typ (1-"; MAX_TYPES; "): ";
+  INPUT selected_type
 
-  INPUT "Typ (1-" + STR$(MAX_TYPES) + "): ", selected_type
 
   IF selected_type < 1 OR selected_type > MAX_TYPES THEN
     PRINT "Neplatna volba!"
