@@ -1,6 +1,6 @@
 ' ==================================
 ' INFOZEM – databaza lokalit (POI)
-' Version: 0.2
+' Version: 0.3
 ' Platform: PicoCalc / MMBasic
 ' Workflow: VSCode → GitHub → iPad → SD
 ' ==================================
@@ -47,8 +47,9 @@ DO
   PRINT
   PRINT "1 - Pridat lokalitu"
   PRINT "2 - Zoznam lokalit"
-  PRINT "3 - Ulozit na SD"
-  PRINT "4 - Nacitat zo SD"
+  PRINT "3 - Editovat lokalitu"
+  PRINT "4 - Ulozit na SD"
+  PRINT "5 - Nacitat zo SD"
   PRINT "0 - Koniec"
   PRINT
   INPUT "Volba: ", choice
@@ -59,8 +60,10 @@ DO
     CASE 2
       GOSUB ListLocations
     CASE 3
-      GOSUB SaveToSD
+      GOSUB EditLocation
     CASE 4
+      GOSUB SaveToSD
+    CASE 5
       GOSUB LoadFromSD
   END SELECT
 
@@ -154,6 +157,103 @@ SelectType:
     PRINT "Neplatna volba!"
     PAUSE 1500
     GOTO SelectType
+  ENDIF
+RETURN
+
+' ==============================
+' EDITOVANIE LOKALITY
+' ==============================
+EditLocation:
+  CLS
+  IF loc_count = 0 THEN
+    PRINT "Ziadne lokality na editaciu."
+    PAUSE 2000
+    RETURN
+  ENDIF
+
+  PRINT "Editacia lokality"
+  PRINT "-----------------"
+
+  FOR i = 1 TO loc_count
+    PRINT i; ". "; loc_name$(i)
+  NEXT i
+
+  PRINT
+  INPUT "Vyber cislo (0 = spat): ", idx
+
+  IF idx = 0 THEN RETURN
+  IF idx < 1 OR idx > loc_count THEN
+    PRINT "Neplatny vyber!"
+    PAUSE 1500
+    RETURN
+  ENDIF
+
+  CLS
+  PRINT "EDITUJES: "; loc_name$(idx)
+  PRINT "(ENTER = bez zmeny)"
+  PRINT
+
+  ' --- TYP ---
+  PRINT "Aktualny typ: "; type_name$(loc_type(idx))
+  GOSUB SelectType
+  IF selected_type <> 0 THEN
+    loc_type(idx) = selected_type
+  ENDIF
+
+  ' --- NAZOV ---
+  GOSUB EditString
+  loc_name$(idx) = edit_result$
+
+  ' --- POPIS ---
+  GOSUB EditString
+  loc_desc$(idx) = edit_result$
+
+  ' --- STAT ---
+  GOSUB EditString
+  loc_country$(idx) = edit_result$
+
+  ' --- MESTO ---
+  GOSUB EditString
+  loc_city$(idx) = edit_result$
+
+  ' --- ALT ---
+  GOSUB EditNumber
+  loc_alt(idx) = edit_number
+
+  ' --- LAT ---
+  GOSUB EditNumber
+  loc_lat(idx) = edit_number
+
+  ' --- LON ---
+  GOSUB EditNumber
+  loc_lon(idx) = edit_number
+
+  PRINT
+  PRINT "Zmeny ulozene v pamati."
+  PAUSE 1500
+RETURN
+
+' -------------------------
+' Editacia textu
+' -------------------------
+EditString:
+  INPUT "", tmp$
+  IF tmp$ = "" THEN
+    edit_result$ = edit_result$
+  ELSE
+    edit_result$ = tmp$
+  ENDIF
+RETURN
+
+' -------------------------
+' Editacia cisla
+' -------------------------
+EditNumber:
+  INPUT "", tmp
+  IF tmp = 0 THEN
+    edit_number = edit_number
+  ELSE
+    edit_number = tmp
   ENDIF
 RETURN
 
